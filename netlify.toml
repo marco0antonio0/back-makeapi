@@ -1,5 +1,4 @@
 [functions]
-  command = "npm ci --legacy-peer-deps && npm run build"
   node_bundler = "esbuild"
   ignored_node_modules = [
     "class-transformer",
