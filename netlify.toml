@@ -1,12 +1,8 @@
 [functions]
   node_bundler = "esbuild"
   ignored_node_modules = [
-    "class-transformer",
-    "class-validator",
     "@nestjs/websockets",
-    "@nestjs/websockets/socket-module",
-    "@nestjs/microservices",
-    "@nestjs/microservices/microservices-module"
+    "@nestjs/microservices"
   ]
 
 # "/api" exato → encaminha para "/.netlify/functions/nest/api"
