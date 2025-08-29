@@ -12,6 +12,9 @@ import express from 'express';
 import serverless from 'serverless-http';
 import { AppModule } from '../../src/app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import 'reflect-metadata';
+import 'class-transformer';
+import 'class-validator'
 
 // Assinatura EXATA do handler da Netlify
 type NetlifyHandler = (event: HandlerEvent, context: HandlerContext) => Promise<HandlerResponse>;

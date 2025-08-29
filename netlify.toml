@@ -7,12 +7,19 @@
 
 [functions]
   node_bundler = "esbuild"
-  # Não bundle-ar; levar como node_modules no zip:
+  # Não bundlear (evita erro no subpath "class-transformer/storage"),
+  # mas COPIAR os módulos para dentro do zip da Function:
   external_node_modules = [
     "class-transformer",
     "class-validator"
   ]
-  # Pode manter libs que você não usa ignoradas (opcional):
+  # Cinto e suspensório: garante a cópia mesmo se o bundler não detectar uso
+  included_files = [
+    "node_modules/class-transformer/**",
+    "node_modules/class-validator/**"
+  ]
+
+  # Pode continuar ignorando libs que você não usa:
   ignored_node_modules = [
     "@nestjs/websockets",
     "@nestjs/microservices"
