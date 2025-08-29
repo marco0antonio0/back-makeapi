@@ -11,6 +11,7 @@ import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
 import serverless from 'serverless-http';
 import { AppModule } from '../../src/app.module';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 // Assinatura EXATA do handler da Netlify
 type NetlifyHandler = (event: HandlerEvent, context: HandlerContext) => Promise<HandlerResponse>;
@@ -27,22 +28,26 @@ async function bootstrap(): Promise<NetlifyHandler> {
     logger: ['error', 'warn', 'log'],
   });
 
-  // Habilite CORS se precisar
   app.enableCors();
     
   app.setGlobalPrefix('api');  
+  const config = new DocumentBuilder()
+    .setTitle('MakeAPI API')
+    .setDescription('Documentação da API MakeAPI')
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
 
-  // Evite prefixo global aqui (use redirect /api/* no netlify.toml)
-  // app.setGlobalPrefix('api');
-
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('docs', app, document);
+  
   await app.init();
 
-  const expressHandler = serverless(expressApp); // retorno é unknown para TS
+  const expressHandler = serverless(expressApp); 
 
   cached = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
     const result = await expressHandler(event, context);
-    // Garantimos ao TS que segue o contrato HandlerResponse
     return result as unknown as HandlerResponse;
   };
 
