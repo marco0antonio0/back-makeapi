@@ -1,0 +1,22 @@
+[functions]
+  node_bundler = "esbuild"
+  ignored_node_modules = [
+    "class-transformer",
+    "class-validator",
+    "@nestjs/websockets",
+    "@nestjs/websockets/socket-module",
+    "@nestjs/microservices",
+    "@nestjs/microservices/microservices-module"
+  ]
+
+# "/api" exato → encaminha para "/.netlify/functions/nest/api"
+[[redirects]]
+  from = "/api"
+  to = "/.netlify/functions/nest/api"
+  status = 200
+
+# "/api/*" → mantém o prefixo dentro da Function
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/nest/api/:splat"
+  status = 200
