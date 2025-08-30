@@ -1,31 +1,11 @@
 [build]
-  command = "npm ci --legacy-peer-deps && npm run build"
+  command = "npm run build"          
   functions = "netlify/functions"
 
-[build.environment]
-  NODE_VERSION = "20"
-
 [functions]
-  node_bundler = "esbuild"
-  # Não bundlear (evita erro no subpath "class-transformer/storage"),
-  # mas COPIAR os módulos para dentro do zip da Function:
-  external_node_modules = [
-    "class-transformer",
-    "class-validator"
-  ]
-  # Cinto e suspensório: garante a cópia mesmo se o bundler não detectar uso
-  included_files = [
-    "node_modules/class-transformer/**",
-    "node_modules/class-validator/**"
-  ]
+  node_bundler = "nft"                
+  included_files = ["dist/**"]       
 
-  # Pode continuar ignorando libs que você não usa:
-  ignored_node_modules = [
-    "@nestjs/websockets",
-    "@nestjs/microservices"
-  ]
-
-# Redirecionamentos
 [[redirects]]
   from = "/api"
   to = "/.netlify/functions/nest/api"
