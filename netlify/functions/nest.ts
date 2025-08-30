@@ -1,39 +1,35 @@
-// netlify/functions/nest.ts
-import 'reflect-metadata';
-import {
-  type Handler,
-  type HandlerEvent,
-  type HandlerContext,
-  type HandlerResponse,
-} from '@netlify/functions';
-import { NestFactory } from '@nestjs/core';
-import { ExpressAdapter } from '@nestjs/platform-express';
-import express from 'express';
-import serverless from 'serverless-http';
-import { AppModule } from '../../src/app.module';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import 'reflect-metadata';
-import 'class-transformer';
-import 'class-validator'
+// netlify/functions/nest.cjs
+let cached;
 
-// Assinatura EXATA do handler da Netlify
-type NetlifyHandler = (event: HandlerEvent, context: HandlerContext) => Promise<HandlerResponse>;
-
-let cached: NetlifyHandler | undefined;
-
-async function bootstrap(): Promise<NetlifyHandler> {
+/** @type {(event:any, context:any)=>Promise<any>} */
+async function bootstrap() {
   if (cached) return cached;
+
+  // IMPORTS dinâmicos (não usamos require)
+  const serverless = (await import('serverless-http')).default;
+  const express = (await import('express')).default;
+  await import('reflect-metadata');
+
+  const { NestFactory } = await import('@nestjs/core');
+  const { ExpressAdapter } = await import('@nestjs/platform-express');
+  const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
+
+  // AppModule compilado (CommonJS). Pode vir como named export ou em default.
+  const dist = await import('../../dist/app.module.js');
+  const AppModule = dist.AppModule ?? dist.default?.AppModule;
+  if (!AppModule) {
+    throw new Error('AppModule não encontrado em ../../dist/app.module.js');
+  }
 
   const expressApp = express();
   const adapter = new ExpressAdapter(expressApp);
-
   const app = await NestFactory.create(AppModule, adapter, {
     logger: ['error', 'warn', 'log'],
   });
 
   app.enableCors();
-    
-  app.setGlobalPrefix('api');  
+  app.setGlobalPrefix('api');
+
   const config = new DocumentBuilder()
     .setTitle('MakeAPI API')
     .setDescription('Documentação da API MakeAPI')
@@ -42,22 +38,20 @@ async function bootstrap(): Promise<NetlifyHandler> {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document);
-  
+  // Fica em: /.netlify/functions/nest/api/docs
+  SwaggerModule.setup('api/docs', app, document);
+
   await app.init();
 
-  const expressHandler = serverless(expressApp); 
-
+  const expressHandler = serverless(expressApp);
   cached = async (event, context) => {
     context.callbackWaitsForEmptyEventLoop = false;
-    const result = await expressHandler(event, context);
-    return result as unknown as HandlerResponse;
+    return await expressHandler(event, context);
   };
-
   return cached;
 }
 
-export const handler: Handler = async (event, context) => {
+exports.handler = async (event, context) => {
   const h = await bootstrap();
   return h(event, context);
 };

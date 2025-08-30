@@ -4,15 +4,22 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(
-    private readonly configService: ConfigService,
-  ) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
+  private readonly configService: ConfigService;
+
+  constructor(configService: ConfigService) {
+    const secret = configService?.get<string>('JWT_SECRET') ?? process.env.JWT_SECRET;
+    if (!secret) {
+      throw new Error('JWT_SECRET não definido nas variáveis de ambiente');
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>('JWT_SECRET'),
+      secretOrKey: secret,
     });
+
+    this.configService = configService;
   }
 
   async validate(payload: any) {

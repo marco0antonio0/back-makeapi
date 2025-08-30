@@ -9,9 +9,8 @@ import { FirebaseModule } from './firebase/firebase.module';
 
 @Module({
   imports: [
-    ItensModule,
-    EndpointModule, AuthModule,
     ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
     FirebaseModule,
   ],
   controllers: [AppController],
