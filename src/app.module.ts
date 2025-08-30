@@ -12,6 +12,8 @@ import { FirebaseModule } from './firebase/firebase.module';
     ConfigModule.forRoot({ isGlobal: true }),
     AuthModule,
     FirebaseModule,
+    ItensModule,
+    EndpointModule
   ],
   controllers: [AppController],
   providers: [AppService],
