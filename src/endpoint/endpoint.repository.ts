@@ -25,6 +25,7 @@ import { CreateEndpointDto } from './dtos/create-endpoint.dto'
 import { UpdateEndpointDto } from './dtos/update-endpoint.dto'
 import { EndpointEntity } from './entities/endpoint.entity'
 import { QueryEndpointDto } from './dtos/query-endpoint.dto'
+import { EndpointWithItemsEntity } from './entities/endpoint-with-items.entity'
 
 function extractIndexUrlFromMessage(msg: string): string | null {
   const m = msg.match(/https:\/\/console\.firebase\.google\.com\/[^\s]+/)
