@@ -6,10 +6,11 @@ import { EndpointModule } from 'src/endpoint/endpoint.module';
 import { ItensRepository } from './itens.repository';
 
 @Module({
-    imports: [FirebaseModule, EndpointModule],
+    imports: [FirebaseModule],
     controllers: [
         ItensController,],
     providers: [
-        ItensService,ItensRepository],
+        ItensService, ItensRepository],
+    exports:[ItensRepository]
 })
 export class ItensModule { }

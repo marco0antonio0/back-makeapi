@@ -14,6 +14,7 @@ import { CreateEndpointDto } from './dtos/create-endpoint.dto'
 import { UpdateEndpointDto } from './dtos/update-endpoint.dto'
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard'
 import { QueryEndpointDto } from './dtos/query-endpoint.dto'
+import { EndpointWithItemsEntity } from './entities/endpoint-with-items.entity'
 
 @ApiTags('Endpoints')
 @Controller('endpoint')
@@ -38,10 +39,24 @@ export class EndpointController {
     }
     
   @Get(':id')
-  @ApiOperation({ summary: 'Buscar endpoint por ID' })
-  @ApiOkResponse({ type: EndpointEntity })
-  @ApiNotFoundResponse({ description: 'Endpoint não encontrado' })
-  findOne(@Param('id') id: string): Promise<EndpointEntity> {
+  @ApiOperation({ summary: 'Obter endpoint por id (com itens)' })
+  @ApiOkResponse({
+    schema: {
+      allOf: [
+        { $ref: '#/components/schemas/EndpointEntity' },
+        {
+          type: 'object',
+          properties: {
+            items: {
+              type: 'array',
+              items: { $ref: '#/components/schemas/ItemEntity' },
+            },
+          },
+        },
+      ],
+    },
+  })
+  findOne(@Param('id') id: string): Promise<EndpointWithItemsEntity> {
     return this.service.findOne(id)
   }
 
