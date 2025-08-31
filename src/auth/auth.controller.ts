@@ -1,6 +1,7 @@
 // auth.controller.ts
 import {
   Controller, Post, Body, HttpCode, UseGuards,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -54,5 +55,27 @@ export class AuthController {
     @Body() body: { userId: number; newRole: number },
   ) {
     return this.authService.changeRoleSuper(body.userId, body.newRole, requesterRole, requesterId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obter idUser e role do usuário autenticado' })
+  @ApiResponse({
+    status: 200,
+    description: 'Informações do usuário autenticado',
+    schema: {
+      example: {
+        idUser: 10,
+        role: 4,
+      },
+    },
+  })
+  getMe(
+    @User('id') idUser: number,
+    @User('role') role: number,
+    @User('email') email: string,
+  ) {
+    return { idUser, email, role };
   }
 }
