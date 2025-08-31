@@ -58,8 +58,8 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('me')
   @ApiBearerAuth()
+  @Get('me')
   @ApiOperation({ summary: 'Obter idUser e role do usuário autenticado' })
   @ApiResponse({
     status: 200,
