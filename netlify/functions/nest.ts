@@ -39,17 +39,92 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // Corrige 404 dos assets no Netlify (usa CDN do Swagger UI)
-  SwaggerModule.setup('api/docs', app, document, {
-    customSiteTitle: 'MakeAPI Docs',
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-    customCssUrl: 'https://unpkg.com/swagger-ui-dist@5/swagger-ui.css',
-    customJs: [
-      'https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js',
-      'https://unpkg.com/swagger-ui-dist@5/swagger-ui-standalone-preset.js',
-    ],
+  // 1) JSON do Swagger
+  expressApp.get('/api/docs-json', (_req, res) => {
+    res.type('application/json').send(document);
+  });
+
+  // 2) HTML do Swagger com carregamento robusto (CDN + fallback)
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>MakeAPI Docs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/png" sizes="32x32" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/favicon-16x16.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css" onerror="this.href='https://unpkg.com/swagger-ui-dist@5/swagger-ui.css'" />
+  <style>
+    body { margin:0; background:#fff; }
+    #swagger-ui { height: 100vh; }
+    .topbar { display:none; }
+    .err { padding: 16px; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, sans-serif; color:#b91c1c; }
+  </style>
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <div id="err" class="err" style="display:none"></div>
+
+  <script>
+    (function () {
+      const CDN1 = 'https://cdn.jsdelivr.net/npm/swagger-ui-dist@5';
+      const CDN2 = 'https://unpkg.com/swagger-ui-dist@5';
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = src;
+          s.async = false; // garante ordem
+          s.onload = () => resolve(src);
+          s.onerror = () => reject(new Error('Falha ao carregar: ' + src));
+          document.head.appendChild(s);
+        });
+      }
+
+      async function boot() {
+        try {
+          // Tenta jsDelivr; se falhar, cai para unpkg
+          try { await loadScript(\`\${CDN1}/swagger-ui-bundle.js\`); }
+          catch { await loadScript(\`\${CDN2}/swagger-ui-bundle.js\`); }
+
+          try { await loadScript(\`\${CDN1}/swagger-ui-standalone-preset.js\`); }
+          catch { await loadScript(\`\${CDN2}/swagger-ui-standalone-preset.js\`); }
+
+          if (typeof window.SwaggerUIBundle !== 'function') {
+            throw new Error('SwaggerUIBundle não disponível após carregar CDNs');
+          }
+
+          const ui = window.SwaggerUIBundle({
+            url: '/api/docs-json',
+            dom_id: '#swagger-ui',
+            deepLinking: true,
+            presets: [window.SwaggerUIBundle.presets.apis, window.SwaggerUIStandalonePreset],
+            layout: 'BaseLayout',
+            docExpansion: 'none',
+            persistAuthorization: true,
+          });
+          window.ui = ui;
+        } catch (e) {
+          const box = document.getElementById('err');
+          box.style.display = 'block';
+          box.textContent = 'Falha ao carregar o Swagger UI: ' + (e && e.message ? e.message : e);
+        }
+      }
+
+      // dispara quando DOM pronto
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+      } else {
+        boot();
+      }
+    })();
+  </script>
+</body>
+</html>`;
+
+  expressApp.get('/api/docs', (_req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
   });
 
   await app.init();
@@ -59,7 +134,6 @@ async function bootstrap() {
     context.callbackWaitsForEmptyEventLoop = false;
     return await expressHandler(event, context);
   };
-
   return cached;
 }
 
