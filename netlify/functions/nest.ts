@@ -13,6 +13,7 @@ async function bootstrap() {
   const { NestFactory } = await import('@nestjs/core');
   const { ExpressAdapter } = await import('@nestjs/platform-express');
   const { DocumentBuilder, SwaggerModule } = await import('@nestjs/swagger');
+  const { ValidationPipe } = await import('@nestjs/common');
 
   // AppModule compilado (dist)
   const dist = await import('../../dist/app.module.js');
@@ -30,6 +31,14 @@ async function bootstrap() {
   app.enableCors();
   app.setGlobalPrefix('api');
 
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+    transformOptions: { enableImplicitConversion: true },
+    validationError: { target: false, value: false },
+  }));
+
   const config = new DocumentBuilder()
     .setTitle('MakeAPI API')
     .setDescription('Documentação da API MakeAPI')
@@ -39,12 +48,12 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
-  // 1) JSON do Swagger
+  // JSON do Swagger
   expressApp.get('/api/docs-json', (_req, res) => {
     res.type('application/json').send(document);
   });
 
-  // 2) HTML do Swagger com carregamento robusto (CDN + fallback)
+  // HTML do Swagger (CDN + fallback)
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -74,7 +83,7 @@ async function bootstrap() {
         return new Promise((resolve, reject) => {
           const s = document.createElement('script');
           s.src = src;
-          s.async = false; // garante ordem
+          s.async = false;
           s.onload = () => resolve(src);
           s.onerror = () => reject(new Error('Falha ao carregar: ' + src));
           document.head.appendChild(s);
@@ -83,7 +92,6 @@ async function bootstrap() {
 
       async function boot() {
         try {
-          // Tenta jsDelivr; se falhar, cai para unpkg
           try { await loadScript(\`\${CDN1}/swagger-ui-bundle.js\`); }
           catch { await loadScript(\`\${CDN2}/swagger-ui-bundle.js\`); }
 
@@ -111,7 +119,6 @@ async function bootstrap() {
         }
       }
 
-      // dispara quando DOM pronto
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', boot);
       } else {

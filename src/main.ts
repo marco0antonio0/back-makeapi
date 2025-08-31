@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -9,6 +10,14 @@ async function bootstrap() {
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: '*',
   });
+  app.useGlobalPipes(new ValidationPipe({
+    whitelist: true,                     
+    forbidNonWhitelisted: true,          
+    transform: true,                      
+    transformOptions: { enableImplicitConversion: true },
+    validationError: { target: false, value: false },  
+  }));
+
   const config = new DocumentBuilder()
     .setTitle('MakeAPI API')
     .setDescription('Documentação da API MakeAPI')
