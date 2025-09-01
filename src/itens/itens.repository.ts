@@ -2,7 +2,7 @@ import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import {
   addDoc, collection, deleteDoc, doc, FieldPath, FieldValue, Firestore,
   getDoc, getDocs, limit as fsLimit, query, QueryConstraint, serverTimestamp,
-  Timestamp, updateDoc, WithFieldValue, where,
+  Timestamp, updateDoc, WithFieldValue, where, startAfter as fsStartAfter
 } from 'firebase/firestore'
 import { FIREBASE_DB } from 'src/firebase/firebase.tokens'
 import { ItemEntity } from './entities/item.entity'
@@ -60,6 +60,19 @@ export class ItensRepository {
     const constraints: QueryConstraint[] = []
     if (params?.endpointId) constraints.push(where('endpointId', '==', params.endpointId))
     if (params?.limit && params.limit > 0) constraints.push(fsLimit(params.limit))
+    const q = query(this.colRef, ...constraints)
+    const snaps = await getDocs(q)
+    return snaps.docs.map((d) => this.map(d.id, d.data() as ItemDocRead))
+  }
+  
+  async findAllWithPagination(params?: { endpointId?: string; limit?: number , startAfterId?: string}): Promise<ItemEntity[]> {
+    const constraints: QueryConstraint[] = []
+    if (params?.endpointId) constraints.push(where('endpointId', '==', params.endpointId))
+    if (params?.limit && params.limit > 0) constraints.push(fsLimit(params.limit))
+    if (params?.startAfterId) {
+      const lastDoc = await getDoc(doc(this.colRef, params.startAfterId))
+      constraints.push(fsStartAfter(lastDoc))
+    }
     const q = query(this.colRef, ...constraints)
     const snaps = await getDocs(q)
     return snaps.docs.map((d) => this.map(d.id, d.data() as ItemDocRead))
