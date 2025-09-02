@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiOkResponse, ApiCreatedResponse, ApiBearerAuth
 import { ItensService } from './itens.service'
 import { CreateItemDto } from './dtos/create-item.dto'
 import { UpdateItemDto } from './dtos/update-item.dto'
+import { ListItemsPaginationQueryDto } from './dtos/list-query-pagination.dto'
 import { ItemEntity } from './entities/item.entity'
 import { ListItemsQueryDto } from './dtos/list-query.dto'
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard'
@@ -27,6 +28,13 @@ export class ItensController {
   @ApiOkResponse({ type: [ItemEntity] })
   findAll(@Query() query: ListItemsQueryDto) {
     return this.service.findAll(query)
+  }
+
+  @Get("/page")
+  @ApiOperation({ summary: 'Listar itens com paginacao (opcional: filtrar por endpointId)' })
+  @ApiOkResponse({ type: [ItemEntity] })
+  findAllWithPagination(@Query() query: ListItemsPaginationQueryDto) {
+    return this.service.findAllWithPagination(query)
   }
 
   @Get(':id')
